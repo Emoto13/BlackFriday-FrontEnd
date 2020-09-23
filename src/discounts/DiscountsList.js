@@ -1,20 +1,21 @@
 import React, { useEffect } from 'react'
 import { getProducts } from '../redux/products/actions.js'
 import { connect } from 'react-redux'
-import ProductMiniView from '../products/ProductMiniView.js'
+import ProductMiniViewList from '../products/ProductMiniViewList.js'
+import { Container } from 'react-bootstrap'
 
 function DiscountsList({ getProducts, products }){
     useEffect(() => {
         async function awaitProducts(){
-            await getProducts(true, '')
+            await getProducts(false, '')
         }
         awaitProducts()
-    }, [])
-    
+    }, [getProducts])
+
     return ( 
-    <div> 
-        Should render a list of product mini views
-    </div> )
+    <Container> 
+        <ProductMiniViewList products={products} />    
+    </Container> )
 }
 
 function mapDispatchToProps(dispatch){
