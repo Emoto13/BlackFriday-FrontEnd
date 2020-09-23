@@ -3,29 +3,66 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { BsQuestionCircle, BsHouseDoor, BsPerson } from "react-icons/bs";
 import { FaPercent, FaShoppingCart } from "react-icons/fa"
 import { TiPhoneOutline } from "react-icons/ti";
-import { Input, Menu } from 'semantic-ui-react'
+import { Input, Menu, Popup, } from 'semantic-ui-react'
 import useWindowDimensions from './windowDimesions.js'
 import './Navigation.css'
 import Logo from './Logo.js'
+import CartPopup from '../cart/CartPopup'
+import { connect } from 'react-redux';
+import { searchUsers } from '../redux/user/actions.js';
+import ResultList from './searchBar/ResultList.js';
 
-// use Navbar from react-bootstrap to make more responsive
-export default function Navigation(){
+// var (not let) outside of the component because its for a timeout function, which should be cleared
+var timeOut;
+
+// TODO FINISH RESULT LIST
+function Navigation({ users, searchUsers }){
 	const [activeIcon, setActiveIcon] = useState()
+	const [searchBarinput, setSearchBarinput] = useState()
+
+
+	const timeOutFunction = function executeTimeout(){
+		clearTimeout(timeOut)
+		timeOut = setTimeout(function awaitSearch(){
+			searchUsers(searchBarinput)
+		}, 1300)
+	}
+
 	useEffect(() => {
 		setActiveIcon(window.location.pathname.toLowerCase())
 	}, [])
 
-  	const { width } = useWindowDimensions()
 
+
+  	const { width } = useWindowDimensions()
     return (
 		<Menu stackable borderless >
 			{ width > 773 ? <Logo /> : <span></span> }
 		  
-			<Menu.Menu position='left' className='menu-bar'>
-        	    <Menu.Item>
-        	        <Input icon='search' placeholder='Search...' />
-        	    </Menu.Item>
-        	</Menu.Menu>
+			  
+		<Popup  on='focus' 
+				trigger={
+					<Menu.Item>
+						<Input
+						type="search" 
+						placeholder='Search...'
+						icon={{ name: 'search'}} 
+						onChange={(e, { value }) => {
+							setSearchBarinput(value)
+							timeOutFunction() 
+						}}
+						/>
+					</Menu.Item>
+			}
+			flowing
+			hideOnScroll
+			hoverable
+			basic
+			>
+				<ResultList users={users} />
+			</Popup>
+	
+						
 
 		<Menu.Menu position="right">
            <Menu.Item
@@ -44,13 +81,19 @@ export default function Navigation(){
 				<FaPercent size={'2.5em'}/>
 			</Menu.Item>
           
-		  <Menu.Item
-			name='/cart'
-			href='/cart'
-			active={activeIcon === '/cart'}
-            >
-				<FaShoppingCart size={'2.5em'} />
-		 	</Menu.Item>
+		   <Popup
+			trigger={	  
+				<Menu.Item
+				name='/cart'
+				active={activeIcon === '/cart'}
+				>
+					<FaShoppingCart size={'2.5em'} />
+				</Menu.Item>
+			}
+			flowing hoverable
+			>
+				<CartPopup />
+			</Popup>
 
 		   <Menu.Item
 			name='/about'
@@ -103,3 +146,18 @@ export default function Navigation(){
 //				</Form>
 //				</Navbar.Collapse>
 //            </Navbar>
+
+function mapStateToProps(state, props){
+    return {
+        users: state.searchedUsers.data,
+		...props
+    }
+}
+
+function mapDispatchToProps(dispatch){	
+	return {
+        searchUsers: (username) => dispatch(searchUsers(username))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Navigation)
