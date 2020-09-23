@@ -1,26 +1,35 @@
 import React, { useState } from "react";
 import { Button, FormGroup, FormControl } from "react-bootstrap";
 import "./Login.css";
-import { store } from '../redux/store.js';
-import { getToken } from '../redux/token/actions.js';
-import { getCurrentUser } from '../redux/user/actions.js';
-import { instance } from '../axios/axios.js'
 import { connect } from 'react-redux'
 
+import { store } from '../../redux/store.js';
+import { getToken } from '../../redux/token/actions.js';
+import { getCurrentUser } from '../../redux/user/actions.js';
+import { instance } from '../../axios/axios.js'
+
 // handle validation
-function Login({ getToken, getCurrentUser }) {
-  const [username, setUsername] = useState("");
+function Login({ getToken, getCurrentUser, cookies }) {
+  const [formUsername, setFormUsername] = useState("");
   const [password, setPassword] = useState("");
 
   function validateForm() {
-    return username.length > 0 && password.length > 0;
+    return formUsername.length > 0 && password.length > 0;
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
-    await getToken({username, password})
-    instance.defaults.headers.common['Authorization'] = `Bearer ${store.getState().token.access}`
+    await getToken({username: formUsername, password})
+
+    const { access, refresh } = store.getState().token
+    instance.defaults.headers.common['Authorization'] = `Bearer ${access}`
+
     await getCurrentUser()
+
+    localStorage.setItem('access', access)
+    localStorage.setItem('refresh', refresh)
+    const { data } = store.getState().user
+    localStorage.setItem('user', JSON.stringify(data))
   }
 
   return (
@@ -29,8 +38,8 @@ function Login({ getToken, getCurrentUser }) {
         <FormGroup controlId="email">
           <FormControl
             autoFocus
-            value={username}
-            onChange={e => setUsername(e.target.value)}
+            value={formUsername}
+            onChange={e => setFormUsername(e.target.value)}
             placeholder="Enter email or username..."
           />
         </FormGroup>
